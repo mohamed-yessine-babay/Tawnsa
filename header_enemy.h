@@ -1,5 +1,5 @@
-#define HEADER_ENEMY_H
 #ifndef HEADER_ENEMY_H
+#define HEADER_ENEMY_H
 
 typedef struct
 {
@@ -20,34 +20,57 @@ typedef struct
 	int damage;
 	int speed;
 	int range;
-}entit_stat; // statistique des different objet, bonus, enemy etc...
+}entity_stats; // statistique des different objet, bonus, enemy etc...
+
+typedef struct
+{
+	SDL_Surface * hb;
+	SDL_Rect life;
+	SDL_Rect progress;
+	int max_health;
+}enemy_healthbar;
 
 typedef struct
 {
 	int on_screen;// apparait à l'ecran 
 	anim idle;
 	SDL_Rect pos_ecran;
-	stat_entity stat;
+	entity_stats stat;
 	int is_active;
 	int is_taken;
 }bonus;
 
+
+
 typedef struct
 {
-	int type;
+	anim mv;
+	int damage;
+	SDL_Rect pos;
+}enemy_projectile;
+
+typedef struct
+{
+	int type;// type d'enemy 0 se deplace au sol 1 vole
 	int on_screen;// apparait à l'ecran
-	SDL_Surface * healthbar;
-	SDL_Rect life;
-	int is_hit;
 	int d;// direction
+	SDL_Rect pos_ecran; // position ecran	
+	enemy_healthbar healthbar;
+	// animation type 0
 	anim walk;
 	anim run;
+	// animation type 1
+	anim fly;
+	// animation commune
 	anim attack;
 	anim death;
-	SDL_Rect pos_ecran;
+	// projectile pour le 2eme type d'enemie
+	enemy_projectile throw_ball;
 	entity_stats stats;
-	bonus loot;
+	bonus loot;// donne un bonus si le joueur est blessé apres la mort de l'enemie
 }enemy;
+
+
 
 typedef struct
 {
@@ -59,25 +82,31 @@ typedef struct
 
 
 // pour faciliter la modification de rect
-SDL_Rect set_rect(int x, int y, int w);
+SDL_Rect set_rect(int x, int y, int w, int h);
 
-// initialisation des structure
+// -----------------------------initialisation des structure-----------------------------
 
-void init_anim(anim *a,char path[], SDL_Rect pos_anim,int w, int h); //animation
+void init_anim(anim *a,char path[], SDL_Rect pos_anim, int fps,int cldw); //animation
 entity_stats init_stats(int type,int health, int damage, int speed, int range);//stat
+enemy_healthbar init_enemy_healthbar(char path[],int max_health); // barre de vie
 void init_bonus(bonus *b,char path[],SDL_Rect pos_anim, int w, entity_stats stat);// bonus
-void init_enemy(enemy *e,char path[],SDL_Rect pos_anim, entity_stats stats, bonus b); //enemy
+void init_enemy_projectile(enemy_projectile *p, char path[], int damage, SDL_Rect pos);
+void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats stats, bonus b); //enemy
 
-// animation
-void animate(anim *a);
+// -----------------------------animation-----------------------------
+void animate(anim *a,int d,/*int *inter,*/ SDL_Surface *screen, SDL_Rect *p_e);
+void anim_reset(anim *a);
 
-// action enemy
+// -----------------------------action-----------------------------
 
+void enemy_walk(enemy *e, SDL_Surface *screen); // walk
+void enemy_run(enemy *e, SDL_Surface *screen); // run
+int enemy_attack(enemy *e,SDL_Surface *screen); // attack
+void enemy_fly(enemy *e, SDL_Surface *screen); // fly
+void enemy_death(enemy *e,SDL_Surface *screen, int p_h, int p_maxh); // mort
 
-
-void enemy_walk(enemy *e, SDL_Surface *screen);
-void enemy_run(enemy *e, SDL_Surface *screen)
-
-void target_player(enemy *e, SDL_Rect pos_player);
+// -----------------------------interactions -----------------------------
+int entity_collision(SDL_Rect e, SDL_Rect p);// Collision
+int enemy_is_hit(enemy e,int p_damage, SDL_Rect p, int p_attack);
 
 #endif
