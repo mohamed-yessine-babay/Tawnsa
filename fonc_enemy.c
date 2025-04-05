@@ -1,7 +1,11 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <string.h>
+#include <time.h>
+#include <math.h>
 #include "header_enemy.h"
+
+
 
 
 // pour faciliter la modification de rect
@@ -149,27 +153,31 @@ void anim_reset(anim *a)
 			a->animating = 1;
 }
 
-// --------------------action--------------------------
+// --------------------action de base--------------------------
 
+void enemy_direction(SDL_Rect *e, int d, int speed)
+{
+	switch (d)
+	{
+		case 0:
+			e->y -= speed;
+			break;
+		case 1:
+			e->x -= speed;
+			break;
+		case 2:
+			e->y += speed;
+			break;
+		case 3:
+			e->x += speed;
+			break;
+	}
+}
 
 
 void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 {
-	switch (e->d)
-	{
-		case 0:
-			e->pos_ecran.y -= (e->stats.speed)/2;
-			break;
-		case 1:
-			e->pos_ecran.x -= (e->stats.speed)/2;
-			break;
-		case 2:
-			e->pos_ecran.y += (e->stats.speed)/2;
-			break;
-		case 3:
-			e->pos_ecran.x += (e->stats.speed)/2;
-			break;
-	}
+	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed/2);
 	animate(&(e->walk),e->d, screen, &(e->pos_ecran));
 	anim_reset(&(e->walk));
 }
@@ -177,42 +185,16 @@ void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 
 void enemy_run(enemy *e, SDL_Surface *screen) // run
 {
-	switch (e->d)
-	{
-		case 0:
-			e->pos_ecran.y -= (e->stats.speed);
-			break;
-		case 1:
-			e->pos_ecran.x -= (e->stats.speed);
-			break;
-		case 2:
-			e->pos_ecran.y += (e->stats.speed);
-			break;
-		case 3:
-			e->pos_ecran.x += (e->stats.speed);
-			break;
-	}
+	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
 	animate(&(e->run),e->d, screen, &(e->pos_ecran));
 	anim_reset(&(e->run));
 }
 
-void enemy_fly(enemy *e, SDL_Surface *screen) // run
+
+// enemy type 1
+void enemy_fly(enemy *e, SDL_Surface *screen) // fly
 {
-	switch (e->d)
-	{
-		case 0:
-			e->pos_ecran.y -= (e->stats.speed);
-			break;
-		case 1:
-			e->pos_ecran.x -= (e->stats.speed);
-			break;
-		case 2:
-			e->pos_ecran.y += (e->stats.speed);
-			break;
-		case 3:
-			e->pos_ecran.x += (e->stats.speed);
-			break;
-	}
+	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
 	animate(&(e->fly),e->d, screen, &(e->pos_ecran));
 	anim_reset(&(e->fly));
 }
@@ -263,7 +245,91 @@ int enemy_is_hit(enemy e,int p_damage, SDL_Rect p, int p_attack) // Subit un cou
 }
 
 
+//--------------------------------affichage-----------------------------------
+void set_enemy_position(enemy *e, SDL_Rect pos_p,int d_p,int scr_w, int scr_h)
+{
+	if(e->type)
+		e->d = (d_p+1)%4;
+	else
+		e->d = (d_p+2)%4;
+	switch(d_p)
+	{
+		case 0:
+			e->pos_ecran.x = pos_p.x;
+			e->pos_ecran.y = -(e->walk.pos_anim[e->d].h);
+			break;
+		case 1:
+			e->pos_ecran.x = -(e->walk.pos_anim[e->d].w);
+			e->pos_ecran.y = pos_p.y;
+			break;
+		case 2:
+			e->pos_ecran.x = pos_p.x;
+			e->pos_ecran.y = scr_h + e->walk.pos_anim[e->d].h;
+			break;
+		case 3:
+			e->pos_ecran.x = scr_w + e->walk.pos_anim[e->d].w;
+			e->pos_ecran.y = pos_p.y;
+			break;
+	}
+}
+int enemy_random()
+{
+	srand(time(NULL));
+        return (int)rand()%5921;
+}
 
+
+// ----------------------------- movement -------------------------------
+void default_movement_enemy(enemy *e, SDL_Surface *screen,int h, int w)
+{
+	int distance = 300;
+	if( e->d%2 == 0)
+		if(e->pos_ecran.y < (h-distance)/2 || 
+		  e->pos_ecran.y + e->pos_ecran.h > h - distance)
+			e->d = (e->d+2)%4;
+	else if(e->d%2 == 1)
+		if(e->pos_ecran.x < (w-(distance+100))/2 || 
+		   e->pos_ecran.y + e->pos_ecran.h > w - (distance+100))
+			e->d = (e->d+2)%4;
+	enemy_walk(e,screen);
+}
+
+void sinus_movement_enemy(SDL_Rect *e, SDL_Rect mov, int orient)
+{	
+	if(!orient)
+	{
+		e->y = mov.y + 50 * sin(0.05 * e->x);
+	}
+	else
+	{
+		e->x = mov.x + 50 * sin(0.05 * e->y);
+	}
+}
+
+void enemy_movement2(enemy *e, SDL_Surface *ecran,SDL_Rect mov,int d_p)
+{
+	int distance;
+	if(e->d%2 == 0)
+	{
+		distance =400;
+		if( e->pos_ecran.x < (mov.w-distance)/2 ||
+		e->pos_ecran.x + e->pos_ecran.w > (mov.w+distance)/2)
+			e->d = (e->d+2)%4;
+	}
+	else
+	{
+		distance = 300;
+		if( e->pos_ecran.y < (mov.h-distance)/2 ||
+		e->pos_ecran.y + e->pos_ecran.h > (mov.h+distance)/2)
+			e->d = (e->d+2)%4;
+	}
+	
+	
+	enemy_direction(&(e->pos_ecran), e->d, 1);
+	sinus_movement_enemy(&(e->pos_ecran), mov, e->d%2);
+	animate(&(e->fly),(d_p+2)%4, ecran, &(e->pos_ecran));
+	anim_reset(&(e->fly));
+}
 
 // se dirige vers le joueur
 /*
