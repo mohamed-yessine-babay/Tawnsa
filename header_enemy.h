@@ -82,7 +82,7 @@ typedef struct
 
 
 // pour faciliter la modification de rect
-SDL_Rect set_rect(int x, int y, int w, int h);
+SDL_Rect set_Rect(int x, int y, int w, int h);
 
 // -----------------------------initialisation des structure-----------------------------
 
@@ -97,8 +97,8 @@ void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats st
 void animate(anim *a,int d,/*int *inter,*/ SDL_Surface *screen, SDL_Rect *p_e);
 void anim_reset(anim *a);
 
-// -----------------------------action-----------------------------
-
+// -----------------------------action de base -----------------------------
+void enemy_direction(SDL_Rect *e, int d, int speed);
 void enemy_walk(enemy *e, SDL_Surface *screen); // walk
 void enemy_run(enemy *e, SDL_Surface *screen); // run
 int enemy_attack(enemy *e,SDL_Surface *screen); // attack
@@ -108,5 +108,16 @@ void enemy_death(enemy *e,SDL_Surface *screen, int p_h, int p_maxh); // mort
 // -----------------------------interactions -----------------------------
 int entity_collision(SDL_Rect e, SDL_Rect p);// Collision
 int enemy_is_hit(enemy e,int p_damage, SDL_Rect p, int p_attack);
+
+
+//--------------------------------affichage--------------------------------
+void set_enemy_position(enemy *e, SDL_Rect pos_p,int d_p,int scr_w, int scr_h);
+void show_enemy(enemy *e, SDL_Surface *screen);
+int enemy_random();
+
+// ----------------------------- movement -------------------------------
+void default_movement_enemy(enemy *e, SDL_Surface *screen,int h, int w);
+void sinus_movement_enemy(SDL_Rect *e, SDL_Rect mov, int orient);
+void enemy_movement2(enemy *e, SDL_Surface *ecran,SDL_Rect mov,int d_p);
 
 #endif
