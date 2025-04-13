@@ -6,10 +6,8 @@
 #include "header_enemy.h"
 
 
-
-
 // pour faciliter la modification de rect
-SDL_Rect set_Rect(int x, int y, int w,int h)
+SDL_Rect set_Rect(int x, int y, int w, int h)
 {
 	SDL_Rect r;
 	r.x = x;
@@ -19,24 +17,35 @@ SDL_Rect set_Rect(int x, int y, int w,int h)
 	return r;
 }
 
+void concat(char ** stock, char c1[],char c2[]);
+
 // --------------------------------initialisation des structure----------------------------
 
 // animation
-void init_anim(anim *a,char path[], SDL_Rect pos_anim, int fps, int cldw)
+void init_anim(anim *a,char path[], SDL_Rect pos_anim, int fps,int cldw,int snd_anim)
 {
 	int i;
 	a->cldw = cldw;
-	a->img = IMG_Load(strcat(path,"/img.png"));
+	a->icldw = cldw;
+	char ch[255];
+	strcpy(ch,path);
+	strcat(ch,"/img.png");
+	a->img = IMG_Load(ch);
 	if(a->img == NULL)
 	{
 		fprintf(stderr,"Erreur chargement image %s\n",SDL_GetError());
 		exit(1);
 	}
-	a->touch = IMG_Load(strcat(path,"/touch.png"));
-	if(a->touch = NULL)
+	strcpy(ch,path);
+	if(snd_anim)
 	{
-		fprintf(stderr,"Erreur chargement image %s\n",SDL_GetError());
-		exit(1);
+		strcat(ch,"/touch.png");
+		a->touch = IMG_Load(ch);
+		if(a->touch = NULL)
+		{
+			fprintf(stderr,"Erreur chargement image %s\n",SDL_GetError());
+			exit(1);
+		}
 	}
 	for(i=0;i<4;i++)
 	{
@@ -50,11 +59,10 @@ void init_anim(anim *a,char path[], SDL_Rect pos_anim, int fps, int cldw)
 
 
 // stat
-entity_stats init_stats(int type,int health, int damage, int speed, int range)
+entity_stats init_stats(int health, int damage, int speed, int range)
 {
 	entity_stats stat;
 	
-	stat.type = type;
 	stat.health = health;
 	stat.damage = damage;
 	stat.speed = speed;
@@ -67,7 +75,10 @@ entity_stats init_stats(int type,int health, int damage, int speed, int range)
 enemy_healthbar init_enemy_healthbar(char path[],int max_health)
 {
 	enemy_healthbar h;
-	h.hb = IMG_Load(strcat(path,"/healthbar"));
+	char ch[255];
+	strcpy(ch,path);
+	strcat(ch,"/healthbar.png");
+	h.hb = IMG_Load(ch);
 	if(h.hb == NULL)
 	{
 		fprintf(stderr,"Erreur chargement image %s\n",SDL_GetError());
@@ -83,7 +94,7 @@ enemy_healthbar init_enemy_healthbar(char path[],int max_health)
 void init_bonus(bonus *b,char path[],SDL_Rect pos_anim, int fps, entity_stats stat)
 {
 	b->on_screen = 0;
-	init_anim(&(b->idle), path,pos_anim, fps,0);
+	init_anim(&(b->idle), path,pos_anim, fps,0,1);
 	b->pos_ecran = set_Rect(0,0,pos_anim.w,pos_anim.h);
 	b->stat = stat;
 	b->is_active = 1;
@@ -93,29 +104,48 @@ void init_bonus(bonus *b,char path[],SDL_Rect pos_anim, int fps, entity_stats st
 // projectile
 void init_enemy_projectile(enemy_projectile *p, char path[], int damage, SDL_Rect pos)
 {
-	init_anim(&(p->mv),strcat(path,"/projectile.png"), pos , 5,0);
+	char ch[255];
+	strcpy(ch,path);
+	strcat(ch,"/projectile.png");
+	p->on_screen = 0;
+	init_anim(&(p->mv),ch, pos , 5,0,0);
 	p->damage = damage;
 	p->pos = pos;
 }		
 
 // enemy
-void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats stats, bonus b)
+void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats stats)
 {
 	e->type = type;
 	e->on_screen = 0;
 	e->d = 3;
+	char ch[255];
+	
 	if(!type)
 	{
-		init_anim(&(e->walk),strcat(path,"/walk.png"), pos_anim, 5,0);
-		init_anim(&(e->run),strcat(path,"/run.png"), pos_anim, 5,0);
-		init_enemy_projectile(&(e->throw_ball),path,stats.damage,pos_anim); 
+		strcpy(ch,path);
+		strcat(ch,"/walk");
+		init_anim(&(e->walk), ch, pos_anim, 9,0,1);
+		strcpy(ch,path);
+		strcat(ch,"/run");
+		init_anim(&(e->run), ch, pos_anim, 8,0,1);
 	}else
-		init_anim(&(e->fly),strcat(path,"/fly.png"),pos_anim, 5,0);
-	init_anim(&(e->attack),strcat(path,"/attack.png"), pos_anim, 5,10);
-	init_anim(&(e->death),strcat(path,"/death.png"), pos_anim, 5,0);
+	{
+		init_enemy_projectile(&(e->throw_ball),path,stats.damage,pos_anim); 
+		strcpy(ch,path);
+		strcat(ch,"/fly");
+		init_anim(&(e->fly),ch,pos_anim, 9,0,1);
+	}
+	strcpy(ch,path);
+	strcat(ch,"/attack");
+	init_anim(&(e->attack),ch, pos_anim, 6,10,1);
+	strcpy(ch,path);
+	strcat(ch,"/death");
+	init_anim(&(e->death),ch, pos_anim, 5,0,0);
+	e->is_hit = 0;
 	e->pos_ecran = pos_anim;
 	e->stats = stats;
-	e->loot = b;
+	e->target_player = 0;
 }
 
 
@@ -123,34 +153,43 @@ void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats st
 
 // ------------------animation----------------------------
 
-void animate(anim *a,int d,/*int *inter,*/ SDL_Surface *screen, SDL_Rect *p_e)
+void animate(anim *a,int d,int *inter, SDL_Surface *screen, SDL_Rect *p_e)
 {
 	if(a->i < a->fps)
 	{
 	
 		a->pos_anim[d].x = a->i * a->pos_anim[d].w;
 		a->i++;
-		/*
-		if(inter)
+		if(*inter)
 		{
-			*inter = 0;
+			*inter--;
 			SDL_BlitSurface(a->touch,&(a->pos_anim[d]),screen,p_e);
 		}
-		else*/
+		else
 			SDL_BlitSurface(a->img,&(a->pos_anim[d]),screen,p_e);
-		SDL_Delay(100/a->fps);
-	}else
-		a->i = 0;
+	}
+	else
+	{	
 		a->animating = 0;
+	}
 }
 
 void anim_reset(anim *a)
 {
 	if(a->i == a->fps)
-		if(a->cldw > 0)
-			a->cldw--;
+	{
+		
+		if(a->icldw > 0)
+		{
+			a->icldw--;
+		}
 		else
+		{
+			a->icldw = a->cldw;
+			a->i = 0;
 			a->animating = 1;
+		}
+	}
 }
 
 // --------------------action de base--------------------------
@@ -178,7 +217,7 @@ void enemy_direction(SDL_Rect *e, int d, int speed)
 void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 {
 	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed/2);
-	animate(&(e->walk),e->d, screen, &(e->pos_ecran));
+	animate(&(e->walk),e->d,&(e->is_hit), screen, &(e->pos_ecran));
 	anim_reset(&(e->walk));
 }
 
@@ -186,25 +225,26 @@ void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 void enemy_run(enemy *e, SDL_Surface *screen) // run
 {
 	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
-	animate(&(e->run),e->d, screen, &(e->pos_ecran));
+	animate(&(e->run),e->d, &(e->is_hit) ,screen, &(e->pos_ecran));
 	anim_reset(&(e->run));
 }
 
 
 // enemy type 1
+/*
 void enemy_fly(enemy *e, SDL_Surface *screen) // fly
 {
 	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
 	animate(&(e->fly),e->d, screen, &(e->pos_ecran));
 	anim_reset(&(e->fly));
 }
-
+*/
 
 int enemy_attack(enemy *e,SDL_Surface *screen) // attack
 {
 	int d = 0;
 	if(e->attack.animating)
-		animate(&(e->attack),e->d,screen,&(e->pos_ecran));
+		animate(&(e->attack),e->d,&(e->is_hit),screen,&(e->pos_ecran));
 	else
 	{
 		anim_reset(&(e->attack));
@@ -214,15 +254,18 @@ int enemy_attack(enemy *e,SDL_Surface *screen) // attack
 }
 
 
-void enemy_death(enemy *e,SDL_Surface *screen, int p_h, int p_maxh) // mort
+void enemy_death(enemy *e,SDL_Surface *screen, int *p_h) // mort
 {
+	e->d = 0;
 	if(e->death.animating)
-		animate(&(e->death),e->d,screen,&(e->pos_ecran));
+		animate(&(e->death),e->d,&(e->is_hit),screen,&(e->pos_ecran));
 	else
 	{
 		e->on_screen = 0;
-		if((float)p_h/p_maxh<0.5)
-			e->loot.on_screen = 1;
+		e->stats.health = 3;
+		anim_reset(&(e->death));
+		if(*p_h<2)
+			*p_h += 1;
 	}
 }
 
@@ -236,38 +279,44 @@ int entity_collision(SDL_Rect e, SDL_Rect p)// Collision
 		return 1;
 }
 
-int enemy_is_hit(enemy e,int p_damage, SDL_Rect p, int p_attack) // Subit un coups
+void enemy_hit(enemy *e,int p_damage, SDL_Rect p, int p_attack) // Subit un coups
 {
-	if(entity_collision(e.pos_ecran, p) && p_attack == 1)
-		return 1;
-	else
-		return 0;
+	if(p_attack == 1 && e->is_hit == 0)
+	{
+		e->is_hit = 4;
+		e->stats.health -= p_damage;
+	}
+}
+
+void projectile_pp_collision(enemy_projectile *p, int hit_something)
+{
+	if(hit_something)
+	{
+		p->on_screen = 0;
+	}
 }
 
 
 //--------------------------------affichage-----------------------------------
 void set_enemy_position(enemy *e, SDL_Rect pos_p,int d_p,int scr_w, int scr_h)
 {
-	if(e->type)
-		e->d = (d_p+1)%4;
-	else
-		e->d = (d_p+2)%4;
+	e->d = (d_p+1)%4;
 	switch(d_p)
 	{
 		case 0:
 			e->pos_ecran.x = pos_p.x;
-			e->pos_ecran.y = -(e->walk.pos_anim[e->d].h);
+			e->pos_ecran.y = (e->walk.pos_anim[e->d].h );
 			break;
 		case 1:
-			e->pos_ecran.x = -(e->walk.pos_anim[e->d].w);
+			e->pos_ecran.x = (e->walk.pos_anim[e->d].w);
 			e->pos_ecran.y = pos_p.y;
 			break;
 		case 2:
 			e->pos_ecran.x = pos_p.x;
-			e->pos_ecran.y = scr_h + e->walk.pos_anim[e->d].h;
+			e->pos_ecran.y = scr_h - e->walk.pos_anim[e->d].h;
 			break;
 		case 3:
-			e->pos_ecran.x = scr_w + e->walk.pos_anim[e->d].w;
+			e->pos_ecran.x = scr_w - e->walk.pos_anim[e->d].w;
 			e->pos_ecran.y = pos_p.y;
 			break;
 	}
@@ -280,18 +329,26 @@ int enemy_random()
 
 
 // ----------------------------- movement -------------------------------
-void default_movement_enemy(enemy *e, SDL_Surface *screen,int h, int w)
+void default_movement_enemy(enemy *e, SDL_Surface *screen, SDL_Rect mov)
 {
 	int distance = 300;
 	if( e->d%2 == 0)
-		if(e->pos_ecran.y < (h-distance)/2 || 
-		  e->pos_ecran.y + e->pos_ecran.h > h - distance)
+	{
+		if(e->pos_ecran.y < (mov.h-distance)/2 || (e->pos_ecran.y + e->pos_ecran.h) > (mov.h + distance)/2)
+		{
 			e->d = (e->d+2)%4;
-	else if(e->d%2 == 1)
-		if(e->pos_ecran.x < (w-(distance+100))/2 || 
-		   e->pos_ecran.y + e->pos_ecran.h > w - (distance+100))
+		}
+		enemy_walk(e,screen);
+	}	
+	else
+	{
+		if(e->pos_ecran.x < (mov.w-(distance+100))/2 || (e->pos_ecran.x + e->pos_ecran.w )> (mov.w + distance+100)/2)
+		{
 			e->d = (e->d+2)%4;
-	enemy_walk(e,screen);
+		}
+		enemy_walk(e,screen);
+	}
+	//enemy_walk(e,screen);
 }
 
 void sinus_movement_enemy(SDL_Rect *e, SDL_Rect mov, int orient)
@@ -327,7 +384,7 @@ void enemy_movement2(enemy *e, SDL_Surface *ecran,SDL_Rect mov,int d_p)
 	
 	enemy_direction(&(e->pos_ecran), e->d, 1);
 	sinus_movement_enemy(&(e->pos_ecran), mov, e->d%2);
-	animate(&(e->fly),(d_p+2)%4, ecran, &(e->pos_ecran));
+	animate(&(e->fly),(d_p+2)%4,&(e->is_hit),ecran, &(e->pos_ecran));
 	anim_reset(&(e->fly));
 }
 
@@ -359,5 +416,67 @@ void goto_player(enemy *e, SDL_Rect p,SDL_Surface *scr)
 */
 
 
+void player_walking(enemy *e,player p)
+{
+	if(p.walking)
+	{
+		switch (p.d)
+		{
+			case 0:
+				e->pos_ecran.y+= p.stat.speed;
+				break;
+			case 1:
+				e->pos_ecran.x+= p.stat.speed;
+				break;
+			case 2:
+				e->pos_ecran.y-= p.stat.speed;
+				break;
+			case 3:
+				e->pos_ecran.x-= p.stat.speed;
+				break;
+		}
+	}
+}
+
+void enemy_behavior(enemy *e, SDL_Surface *screen, player *p,SDL_Rect scr)
+{
+	if(!e->on_screen)
+	{
+		set_enemy_position(e, p->p,p->d,scr.w, scr.h);
+	}else
+	{
+		if(e->stats.health >0)
+		{
+			if(!e->type)
+			{
+				if(e->target_player)
+				{
+					if(entity_collision(e->pos_ecran, p->p))
+					{
+						enemy_hit(e,p->stat.damage, p->p, p->attack);
+						p->stat.health -= enemy_attack(e,screen);	
+					}
+				}
+				else
+				{
+					if(!entity_collision(e->pos_ecran,p->p))
+						default_movement_enemy(e,screen,scr);
+				}
+					
+			}
+			else
+			{
+				enemy_movement2(e,screen,scr,p->d);
+			}
+		
+		}
+		else
+		{
+			enemy_death(e,screen, &(p->stat.health));
+		}
+	}
+	SDL_Delay(50);
+		
+}
 
 
