@@ -1,3 +1,4 @@
+
 #ifndef PERSO_H
 #define PERSO_H
 
@@ -25,11 +26,13 @@ typedef struct {
 
 // Structure principale du personnage
 typedef struct {
+	
     int state;          // État optionnel (non utilisé dans ton main pour l’instant)
     animation walk;
     animation jump;
     animation dead;
 	animation run;
+	//animation attack;
 	animation walk1;
     animation jump1;
     animation dead1;
@@ -38,17 +41,17 @@ typedef struct {
     SDL_Rect posEcran;  // Position du perso sur l’écran
 	SDL_Rect posEcran2;  
     SDL_Rect posScore;  // Position du score à l’écran
-SDL_Rect posScore2;
+	SDL_Rect posScore2;
+	SDL_Surface *etat_vie[4]; // 4 images pour les états de vie
+
     int health;
     int score;
     int step;
-
     vitesse v;
-
-    
     int etat;           // 0 = normal, 1 = dead, 2 = jump
-	SDL_Surface *etat_vie[4]; // 4 images pour les états de vie
 	int nb_morts;             // compteur de morts
+	int up;
+int direction1, direction2;
 	
 } perso;
 
@@ -56,23 +59,16 @@ SDL_Rect posScore2;
 
 // Initialisation et affichage du personnage
 void init_perso(perso *p, SDL_Rect posEcran,perso *p2,SDL_Rect posEcran2);
-void afficher_perso(SDL_Surface *ecran, perso *p, perso *p2) ;
+void afficher_perso(SDL_Surface *ecran, perso *p) ;
+void afficher_perso2(SDL_Surface *ecran, perso *p2) ;
 // Affichage du score
 void afficher_score(perso *p, SDL_Surface *ecran, SDL_Rect posScore, TTF_Font *font, SDL_Color textColor , perso *p2,SDL_Rect posScore2);
 void afficher_vie(perso *p, SDL_Surface *ecran, perso *p2) ;
 // Animation
-void animer_perso(perso *p, perso *p2);
+void animer_perso(perso *p);
+void animer_perso2(perso *p2);
 
-// Contrôle du personnage
-void perso_walk(SDL_Event event, perso *p, int *quitter);
-void perso_dead(perso *p, SDL_Event event, int *quitter);
-void perso_jump(SDL_Event event, perso *p, int *quitter);
-void perso_run(SDL_Event e, perso *p, int *quitter);
-
-void perso_walk1(SDL_Event event, perso *p2, int *quitter);
-void perso_run1(SDL_Event event, perso *p2, int *quitter);
-void perso_jump1(SDL_Event event, perso *p2, int *quitter);
-void perso_dead1(perso *p2, SDL_Event event, int *quitter);
+void saut_Personnage(perso *p, Uint32 dt, int posx_absolu, int posy_absolu);
+void saut_Perso(perso *p2, Uint32 dt, int posx_absolu1, int posy_absolu1);
 
 #endif
-

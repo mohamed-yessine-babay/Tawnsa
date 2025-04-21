@@ -35,32 +35,192 @@ int main(int argc, char** argv)
     }
 //couleur
     SDL_Color textColor = {0, 0, 0}; // Noir
-
+// Init des personnages
     perso p, p2;
     SDL_Rect posEcran = {100, 350, 0, 0};
     SDL_Rect posEcran2 = {700, 350, 0, 0};
     SDL_Rect posScore = {20, 20, 0, 0};
     SDL_Rect posScore2 = {20, 60, 0, 0};
     init_perso(&p, posEcran,&p2,posEcran2);
-
-    while (quitter)//boucle principale
-    {
-        SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
-
-        while (SDL_PollEvent(&event))
-        {
-            perso_walk(event, &p, &quitter);
-            perso_dead(&p, event, &quitter);
-            perso_jump(event, &p, &quitter);
-	perso_run(event, &p, &quitter);
-
-	perso_walk1(event, &p2, &quitter);
-            perso_dead1(&p2, event, &quitter);
-            perso_jump1(event, &p2, &quitter);
-	perso_run1(event, &p2, &quitter);
 	
-        }
 
+	int show_perso2=0;
+	int posinit= p.posEcran.y; //position initiale avant le saut
+	int posinit2= p2.posEcran2.y; //position initiale avant le saut
+	int dt=0;
+	Uint32 time=0, last=0;
+
+while(quitter){
+		time = SDL_GetTicks();
+		dt= time-last;
+		last=time;
+        SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
+    while (SDL_PollEvent(&event)) //  boucle principale
+    {
+
+	if (event.type == SDL_KEYDOWN)
+    	{
+        switch (event.key.keysym.sym)
+        {
+        case SDLK_ESCAPE:
+            quitter = 0;
+            break;
+	case SDLK_m:
+			show_perso2=1;
+			break;
+//perso 1: deplacement
+        case SDLK_LEFT:
+            p.v.dx = -8;
+            p.walk.pos.y = p.walk.spriteH; // selectionne la ligne de spritesheet 
+            p.score += 10;
+			p.direction1=1;
+            break;
+        case SDLK_RIGHT:
+            p.v.dx = 8;
+            p.walk.pos.y = p.walk.spriteH * 3; // ligne droite
+            p.score += 10;
+            p.direction1=3;
+            break;
+		case SDLK_DOWN:
+		if (p.nb_morts < 3) {
+            p.etat = 1;
+            p.dead.index = 0;
+	    	p.nb_morts++;
+			}
+		else {
+                
+                printf("GAME OVER\n");
+                quitter = 0; // Fin du jeu
+            }
+            break;
+            
+        case SDLK_r:
+            p.etat = 0;
+            p.walk.index = 0;
+            break;
+		case SDLK_UP:
+            if (p.up ==0)
+			{
+				p.up=1;
+				posinit = p.posEcran.y;
+				p.score += 10;
+			}
+            break;
+			case SDLK_c:
+            p.v.dx = -20;
+            p.etat = 3; // état spécial pour courir (gauche)
+            p.run.pos.y = p.run.spriteH; // ligne 2 = gauche
+            p.score += 10;
+            break;
+
+        case SDLK_v:
+            p.v.dx = 20;
+            p.etat = 3; // état spécial pour courir (droite)
+            p.run.pos.y = p.run.spriteH * 3; // ligne 4 = droite
+            p.score += 10;
+            break;
+//perso 2: deplacement
+		case SDLK_q:
+			p2.etat=0;
+            p2.v.dx = -12;
+            p2.walk1.pos.y = 1* p2.walk1.spriteH; // selectionne la ligne de spritesheet 
+            p2.score += 10;
+            p2.direction2=1;
+            break;
+        case SDLK_d:
+			p2.etat=0;
+            p2.v.dx = 12;
+            p2.walk1.pos.y =3* p2.walk1.spriteH ;// ligne droite
+            p2.score += 10;
+            p2.direction2=3;
+            break;
+		case SDLK_s:
+		if (p2.nb_morts <3) {
+            p2.etat = 1;
+            p2.dead1.index = 0;
+	    	p2.nb_morts++;
+			}
+			else {    
+            printf("GAME OVER\n");
+            quitter = 0; // Fin du jeu
+            }
+            break;
+            
+        case SDLK_e:
+            p2.etat = 0;
+            p2.walk1.index = 0;
+            break;
+		case SDLK_w:
+            p2.v.dx = -20;
+            p2.etat = 3;
+            p2.run1.pos.y = p2.run1.spriteH;
+            p2.run1.index = (p2.run1.index + 1) % p2.run1.max;
+            p2.run1.pos.x = p2.run1.index * p2.run1.spriteW;
+            p2.score += 10;
+            break;
+
+        case SDLK_x:
+            p2.v.dx = 20;
+            p2.etat = 3;
+            p2.run1.pos.y = p2.run1.spriteH * 3;
+            p2.run1.index = (p2.run1.index + 1) % p2.run1.max;
+            p2.run1.pos.x = p2.run1.index * p2.run1.spriteW;
+            p2.score += 10;
+            break;
+        case SDLK_z:
+            if (p2.up ==0)
+			{
+				p2.up=1;
+				posinit2 = p2.posEcran2.y;
+				p2.score += 10;
+			}
+            break;
+        }
+    }
+		else if (event.type == SDL_KEYUP)
+    	{
+        switch (event.key.keysym.sym)
+        {
+			case SDLK_LEFT:
+            case SDLK_RIGHT:
+            p.v.dx = 0;
+            p.walk.index = 0;
+            p.walk.pos.x = 0;
+            p.score += 10;
+			break;
+        
+			case SDLK_c:
+            case SDLK_v:
+			p.v.dx = 0;
+            p.run.index = 0;
+            p.run.pos.x = 0;
+            p.etat = 0;
+            p.score += 10;
+            break;
+			case SDLK_q:
+            case SDLK_d:
+            p2.v.dx = 0;
+            p2.walk1.index = 0;
+            p2.walk1.pos.x = 0;
+            p.score += 10;
+            break;
+			case SDLK_w:
+            case SDLK_x:
+            p2.v.dx = 0;
+            p2.run1.index = 0;
+            p2.run1.pos.x = 0;
+            p2.etat = 0;
+            p.score += 10;
+            break;
+        case SDLK_UP:
+        case SDLK_z:
+            // Ne rien faire ici en général pour le saut,
+            // le retour à l'état normal se gère dans la boucle principale
+            break;
+        }
+      }
+    }
+       
         // Appliquer la vitesse
         // Appliquer la vitesse si marche ou course
 if (p.etat == 0 || p.etat == 3) {
@@ -72,33 +232,11 @@ if (p2.etat == 0 || p2.etat == 3) {
     p2.posEcran2.y += p2.v.dy;
 }
 
-        // Gestion gravité (Si le personnage saute, il "tombe" avec une gravité simulée. Quand il touche le sol (Y=350), on le remet en marche).
-        if (p.etat == 2) {
-    p.v.dy += 2; // effet de gravité
-    p.posEcran.y += p.v.dy;
-
-    if (p.posEcran.y >= 350) {
-        p.posEcran.y = 350;
-        p.v.dy = 0;
-        p.etat = 0; // retour à la marche
-    }
-} else {
-    p.v.dy = 0;
-}
-if (p2.etat == 2) {
-    p2.v.dy += 2; // effet de gravité
-    p2.posEcran2.y += p2.v.dy;
-
-    if (p2.posEcran2.y >= 350) {
-        p2.posEcran2.y = 350;
-        p2.v.dy = 0;
-        p2.etat = 0; // retour à la marche
-    }
-} else {
-    p2.v.dy = 0;
-}
 
 
+	saut_Personnage(&p, dt, p.posEcran.x, posinit);
+	saut_Perso(&p2, dt, p2.posEcran2.x, posinit2);
+	
         // Empêcher de sortir de l'écran
         if (p.posEcran.x < 0) p.posEcran.x = 0;
         if (p.posEcran.y < 0) p.posEcran.y = 0;
@@ -107,14 +245,29 @@ if (p2.etat == 2) {
 	if (p.posEcran.x > 1920 - p.run.spriteW) p.posEcran.x = 1920 - p.run.spriteW;
         if (p.posEcran.y > 1080 - p.run.spriteH) p.posEcran.y = 1080 - p.run.spriteH;
 
-	if (p2.posEcran2.x > 1920 - p2.walk.spriteW) p2.posEcran2.x = 1920 - p2.walk.spriteW;
-        if (p2.posEcran2.y > 1080 - p2.walk.spriteH) p2.posEcran2.y = 1080 - p2.walk.spriteH;
-	if (p2.posEcran2.x > 1920 - p2.run.spriteW) p2.posEcran2.x = 1920 - p2.run.spriteW;
-        if (p2.posEcran2.y > 1080 - p2.run.spriteH) p2.posEcran2.y = 1080 - p2.run.spriteH;
+	if (p2.posEcran2.x < 0) p2.posEcran2.x = 0;
+        if (p2.posEcran2.y < 0) p2.posEcran2.y = 0;
+	if (p2.posEcran2.x > 1920 - p2.walk1.spriteW) p2.posEcran2.x = 1920 - p2.walk1.spriteW;
+        if (p2.posEcran2.y > 1080 - p2.walk1.spriteH) p2.posEcran2.y = 1080 - p2.walk1.spriteH;
+	if (p2.posEcran2.x > 1920 - p2.run1.spriteW) p2.posEcran2.x = 1920 - p2.run1.spriteW;
+        if (p2.posEcran2.y > 1080 - p2.run.spriteH) p2.posEcran2.y = 1080 - p2.run1.spriteH;
 
-        animer_perso(&p,&p2);
-        afficher_perso(ecran, &p,&p2);
-        afficher_score(&p, ecran, posScore, font, textColor,&p2,posScore2);
+
+	// Toujours afficher le personnage 1
+afficher_perso(ecran, &p);
+animer_perso(&p);
+
+// Afficher le perso 2 en plus si activé
+if (show_perso2 == 1)
+{
+	printf("Affichage perso 2\n");
+    afficher_perso2(ecran, &p2);
+    printf("animer perso 2\n");
+    animer_perso2(&p2);
+}
+
+	
+	afficher_score(&p, ecran, posScore, font, textColor,&p2,posScore2);
 	afficher_vie(&p, ecran,&p2);
 
 
@@ -124,14 +277,15 @@ if (p2.etat == 2) {
         SDL_Delay(100);
     }
 
+    // LIBÉRATION MÉMOIRE
     SDL_FreeSurface(p.walk.a);
     SDL_FreeSurface(p.dead.a);
     SDL_FreeSurface(p.jump.a);
-SDL_FreeSurface(p2.run.a);
-SDL_FreeSurface(p2.walk.a);
-    SDL_FreeSurface(p2.dead.a);
-    SDL_FreeSurface(p2.jump.a);
-SDL_FreeSurface(p2.run.a);
+    SDL_FreeSurface(p.run.a);
+    SDL_FreeSurface(p2.walk1.a);
+    SDL_FreeSurface(p2.dead1.a);
+    SDL_FreeSurface(p2.jump1.a);
+    SDL_FreeSurface(p2.run1.a);
 
     TTF_CloseFont(font);
     TTF_Quit();
@@ -139,5 +293,3 @@ SDL_FreeSurface(p2.run.a);
 
     return 0;
 }
-
-
