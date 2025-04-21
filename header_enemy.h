@@ -68,6 +68,7 @@ typedef struct
 	int on_screen;// apparait à l'ecran
 	int d;// direction
 	SDL_Rect pos_ecran; // position ecran
+	SDL_Rect spawn_pos;
 	int is_hit;	
 	enemy_healthbar healthbar;
 	// animation type 0
@@ -115,6 +116,7 @@ void anim_reset(anim *a);
 void enemy_direction(SDL_Rect *e, int d, int speed);
 void enemy_walk(enemy *e, SDL_Surface *screen); // walk
 void enemy_run(enemy *e, SDL_Surface *screen); // run
+void enemy_stop(enemy *e,SDL_Surface *screen);
 int enemy_attack(enemy *e,SDL_Surface *screen); // attack
 //void enemy_fly(enemy *e, SDL_Surface *screen); // fly
 void enemy_death(enemy *e,SDL_Surface *screen, int *p_h); // mort
@@ -132,7 +134,11 @@ int enemy_random();
 void default_movement_enemy(enemy *e, SDL_Surface *screen, SDL_Rect mov);
 void sinus_movement_enemy(SDL_Rect *e, SDL_Rect mov, int orient);
 void enemy_movement2(enemy *e, SDL_Surface *ecran,SDL_Rect mov,int d_p);
-void player_walking(enemy *e,player p);
+// --------------------------AI & Comportement---------------------------------
+void enemy_target_player(enemy *e,SDL_Rect p);
+void enemy_attack_player(enemy *e,player *p,SDL_Surface *screen);
+void enemy_pathfind(enemy *e, SDL_Rect p,SDL_Surface *scr/*,SDL_Rect obst*/,int mode);
+void enemy_scrolling(enemy *e, int scrolling, int speed, SDL_Rect *r);
 void enemy_behavior(enemy *e, SDL_Surface *screen, player *p,SDL_Rect scr);
 
 #endif

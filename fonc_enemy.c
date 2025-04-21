@@ -28,8 +28,9 @@ void init_anim(anim *a,char path[], SDL_Rect pos_anim, int fps,int cldw,int snd_
 	a->cldw = cldw;
 	a->icldw = cldw;
 	char ch[255];
-	strcpy(ch,path);
-	strcat(ch,"/img.png");
+	sprintf(ch, "%s/img.png",path);
+	//strcpy(ch,path);
+	//strcat(ch,"/img.png");
 	a->img = IMG_Load(ch);
 	if(a->img == NULL)
 	{
@@ -131,7 +132,7 @@ void init_enemy(enemy *e,int type,char path[],SDL_Rect pos_anim, entity_stats st
 		init_anim(&(e->run), ch, pos_anim, 8,0,1);
 	}else
 	{
-		init_enemy_projectile(&(e->throw_ball),path,stats.damage,pos_anim); 
+		init_enemy_projectile(&(e->throw_ball),path,stats	.damage,pos_anim); 
 		strcpy(ch,path);
 		strcat(ch,"/fly");
 		init_anim(&(e->fly),ch,pos_anim, 9,0,1);
@@ -179,14 +180,15 @@ void anim_reset(anim *a)
 	if(a->i == a->fps)
 	{
 		
+		
 		if(a->icldw > 0)
 		{
 			a->icldw--;
 		}
 		else
 		{
-			a->icldw = a->cldw;
 			a->i = 0;
+			a->icldw = a->cldw;
 			a->animating = 1;
 		}
 	}
@@ -216,7 +218,7 @@ void enemy_direction(SDL_Rect *e, int d, int speed)
 
 void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 {
-	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed/2);
+	//enemy_direction(&(e->pos_ecran),e->d,e->stats.speed/2);
 	animate(&(e->walk),e->d,&(e->is_hit), screen, &(e->pos_ecran));
 	anim_reset(&(e->walk));
 }
@@ -224,7 +226,7 @@ void enemy_walk(enemy *e, SDL_Surface *screen) // walk
 
 void enemy_run(enemy *e, SDL_Surface *screen) // run
 {
-	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
+	//enemy_direction(&(e->pos_ecran),e->d,e->stats.speed);
 	animate(&(e->run),e->d, &(e->is_hit) ,screen, &(e->pos_ecran));
 	anim_reset(&(e->run));
 }
@@ -240,15 +242,28 @@ void enemy_fly(enemy *e, SDL_Surface *screen) // fly
 }
 */
 
+void enemy_stop(enemy *e,SDL_Surface *screen)
+{
+	SDL_Rect r = e->walk.pos_anim[e->d];
+	r.x = 0;
+	if(e->is_hit)
+		SDL_BlitSurface(e->walk.touch,&(r),screen,&(e->pos_ecran));
+	else
+		SDL_BlitSurface(e->walk.img,&(r),screen,&(e->pos_ecran));
+}
+
 int enemy_attack(enemy *e,SDL_Surface *screen) // attack
 {
 	int d = 0;
-	if(e->attack.animating)
-		animate(&(e->attack),e->d,&(e->is_hit),screen,&(e->pos_ecran));
-	else
+	
+	animate(&(e->attack),e->d,&(e->is_hit),screen,&(e->pos_ecran));
+	if(!e->attack.animating)
 	{
 		anim_reset(&(e->attack));
-		if(e->attack.animating) d = e->stats.damage;
+		if(e->attack.icldw>=0)
+			enemy_stop(e,screen);
+		if(e->attack.animating) 
+			d = e->stats.damage;
 	}
 	return d;
 }
@@ -338,7 +353,6 @@ void default_movement_enemy(enemy *e, SDL_Surface *screen, SDL_Rect mov)
 		{
 			e->d = (e->d+2)%4;
 		}
-		enemy_walk(e,screen);
 	}	
 	else
 	{
@@ -346,9 +360,9 @@ void default_movement_enemy(enemy *e, SDL_Surface *screen, SDL_Rect mov)
 		{
 			e->d = (e->d+2)%4;
 		}
-		enemy_walk(e,screen);
 	}
-	//enemy_walk(e,screen);
+	enemy_direction(&(e->pos_ecran),e->d,e->stats.speed/2);
+	enemy_walk(e,screen);
 }
 
 void sinus_movement_enemy(SDL_Rect *e, SDL_Rect mov, int orient)
@@ -388,80 +402,141 @@ void enemy_movement2(enemy *e, SDL_Surface *ecran,SDL_Rect mov,int d_p)
 	anim_reset(&(e->fly));
 }
 
-// se dirige vers le joueur
-/*
-void goto_player(enemy *e, SDL_Rect p,SDL_Surface *scr)
-{	
-	if(e->pos_ecran.y + e->pos_ecran.h < p.y)
-	{
-		e->d = 0;
-		enemy_run(e,scr);
-	}
-	if(e->pos_ecran.x > p.x + p.w)
-	{
-		e->d = 1;
-		enemy_run(e,scr);
-	}
-	if(e->pos_ecran.y > p.y + p.h)
-	{
-		e->d = 2;
-		enemy_run(e,scr);
-	}
-	if(e->pos_ecran.x + e->pos_ecran.w < p.x)
-	{
-		e->d = 3;
-		enemy_run(e,scr);
-	}	
-}
-*/
+// -------------------------------AI & Comportement-----------------------------------
 
-
-void player_walking(enemy *e,player p)
+void enemy_target_player(enemy *e,SDL_Rect p)
 {
-	if(p.walking)
+	int dist = 300;
+	if((p.x - e->pos_ecran.x < dist && p.x -e->pos_ecran.x > -dist) 
+	&&(p.y - e->pos_ecran.x < dist && p.y -e->pos_ecran.y > -dist))
+		e->target_player = 1;
+	else
+		e->target_player = 0;
+}
+
+
+void enemy_attack_player(enemy *e,player *p,SDL_Surface *screen)
+{
+		enemy_hit(e,p->stat.damage, p->p, p->attack);
+		p->stat.health -= enemy_attack(e,screen);
+}
+
+void enemy_pathfind(enemy *e, SDL_Rect p,SDL_Surface *scr/*,SDL_Rect obst*/,int mode)
+{	
+	
+	int dx,dy,dirx,diry;
+	//int speed = e->stats.speed;
+	int S =10,speedx = S,speedy;
+	int diffx = abs(p.x - e->pos_ecran.x);
+	int diffy = abs(p.y - e->pos_ecran.y);
+	if(diffx < S && diffx >0)
 	{
-		switch (p.d)
+		speedx = diffx;
+	}else
+		speedx = S;
+		
+	if(diffy < S && diffy >0)
+	{
+		speedy = diffy;
+	}else
+		speedy = S;
+	// direction vers joueur;
+	/*if(abs(p.x - e->pos_ecran.x<speed))
+		speed = p.x - e->pos_ecran.x;
+	if(abs(p.y - e->pos_ecran.y<speed))
+		speed = p.y - e->pos_ecran.y;
+	*/
+	printf("x p - x e = %d\n",p.x - e->pos_ecran.x);
+	printf("y p - y e = %d\n",p.y - e->pos_ecran.y);
+	if(e->pos_ecran.x < p.x) { e->d = 3; dx = speedx;}
+	else if(e->pos_ecran.x > p.x) { e->d= 1; dx = -speedx;}
+	if(e->pos_ecran.y < p.y) { e->d = 2; dy = speedy;}
+	else if(e->pos_ecran.y > p.y) {e->d =0; dy = -speedy;}
+	if(!mode) {dx/=2;dy/=2;}
+	
+	
+	//SDL_Rect TryX = e->pos_ecran;
+	//TryX.x += dx;
+	/*SDL_Rect TryY = e->pos_ecran;
+	TryY.y += dy;*/
+	/*if(!entity_collision(Try,obst))
+	{*/
+	if(e->pos_ecran.y != p.y)
+	{
+		e->pos_ecran.y +=dy;
+	}
+	if(e->pos_ecran.x != p.x)
+	{
+		e->pos_ecran.x +=dx;
+	}
+	
+	/*		
+	if(mode)*/
+	enemy_run(e,scr);
+		//enemy_run(e,scr);
+	/*else
+		enemy_walk(e,scr);
+	*/
+}
+
+
+
+void enemy_scrolling(enemy *e, int scrolling, int speed, SDL_Rect *r)
+{
+	if(scrolling)
+	{
+		switch (scrolling)
 		{
 			case 0:
-				e->pos_ecran.y+= p.stat.speed;
+				e->pos_ecran.y+= speed;
 				break;
 			case 1:
-				e->pos_ecran.x+= p.stat.speed;
+				e->pos_ecran.x+= speed;
 				break;
 			case 2:
-				e->pos_ecran.y-= p.stat.speed;
+				e->pos_ecran.y-= speed;
 				break;
 			case 3:
-				e->pos_ecran.x-= p.stat.speed;
+				e->pos_ecran.x-= speed;
 				break;
 		}
 	}
 }
 
-void enemy_behavior(enemy *e, SDL_Surface *screen, player *p,SDL_Rect scr)
+
+
+void enemy_behavior(enemy *e, SDL_Surface *screen, player *p,SDL_Rect scr/*,int pp,int scrolling*/)
 {
 	if(!e->on_screen)
 	{
 		set_enemy_position(e, p->p,p->d,scr.w, scr.h);
+		e->spawn_pos = e->pos_ecran;
 	}else
 	{
 		if(e->stats.health >0)
 		{
 			if(!e->type)
 			{
+				
+				enemy_target_player(e,p->p);
 				if(e->target_player)
 				{
-					if(entity_collision(e->pos_ecran, p->p))
+					if(entity_collision(e->pos_ecran,p->p))
 					{
-						enemy_hit(e,p->stat.damage, p->p, p->attack);
-						p->stat.health -= enemy_attack(e,screen);	
+						enemy_attack_player(e,p,screen);
+					}
+					else
+					{
+						enemy_pathfind(e,p->p,screen,/*set_Rect(0,0,0,0),*/1);
 					}
 				}
 				else
-				{
-					if(!entity_collision(e->pos_ecran,p->p))
-						default_movement_enemy(e,screen,scr);
-				}
+				//{*/
+					//if(e->pos_ecran.x != e->spawn_pos.x && e->pos_ecran.y != e->spawn_pos.y)
+						//enemy_pathfind(e,e->spawn_pos,screen/*,obst*/,0);
+					//else
+						default_movement_enemy(e,screen, scr );
+				//}
 					
 			}
 			else
@@ -475,7 +550,7 @@ void enemy_behavior(enemy *e, SDL_Surface *screen, player *p,SDL_Rect scr)
 			enemy_death(e,screen, &(p->stat.health));
 		}
 	}
-	SDL_Delay(50);
+	SDL_Delay(60);
 		
 }
 

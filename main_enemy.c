@@ -168,6 +168,7 @@ int main(int argc, char** argv)
 		SDL_BlitSurface(lamis.i,&(lamis.state[p]),ecran,&(lamis.pos));
 		enemy_behavior(&e1, ecran, &(lamis_p), set_Rect(0,0,sW,sH));
 		SDL_Flip(ecran);
+		
 	}
 	SDL_FreeSurface(lamis.i);
 	SDL_Quit();
