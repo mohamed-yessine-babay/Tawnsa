@@ -12,6 +12,8 @@ typedef struct {
     int dy;
 } vitesse;
 
+
+
 // Structure pour une animation (walk, jump, dead, etc.)
 typedef struct {
     SDL_Surface *a;     // L’image contenant les sprites
@@ -32,12 +34,12 @@ typedef struct {
     animation jump;
     animation dead;
 	animation run;
-	//animation attack;
+	animation attack;
 	animation walk1;
     animation jump1;
     animation dead1;
 	animation run1;
-
+	animation attack1;
     SDL_Rect posEcran;  // Position du perso sur l’écran
 	SDL_Rect posEcran2;  
     SDL_Rect posScore;  // Position du score à l’écran
@@ -52,6 +54,7 @@ typedef struct {
 	int nb_morts;             // compteur de morts
 	int up;
 int direction1, direction2;
+
 	
 } perso;
 

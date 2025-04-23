@@ -17,7 +17,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Échec de création de la fenêtre : %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
-    }
+    }	
 // init texte
     if (TTF_Init() == -1)
     {
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     SDL_Rect posScore2 = {20, 60, 0, 0};
     init_perso(&p, posEcran,&p2,posEcran2);
 	
-
+	
 	int show_perso2=0;
 	int posinit= p.posEcran.y; //position initiale avant le saut
 	int posinit2= p2.posEcran2.y; //position initiale avant le saut
@@ -158,6 +158,33 @@ while(quitter){
             p2.run1.pos.x = p2.run1.index * p2.run1.spriteW;
             p2.score += 10;
             break;
+	case SDLK_h:
+    p.attack.index = 0;
+    p.attack.pos.x = 0;
+    p.attack.pos.y = p.attack.spriteH * 1; // Ligne 1
+    p.etat = 4;
+    break;
+
+case SDLK_j:
+    p.attack.index = 0;
+    p.attack.pos.x = 0;
+    p.attack.pos.y = p.attack.spriteH * 3; // Ligne 3
+    p.etat = 4;
+    break;
+
+case SDLK_k:
+    p2.attack1.index = 0;
+    p2.attack1.pos.x = 0;
+    p2.attack1.pos.y = p2.attack1.spriteH * 1; // Ligne 1
+    p2.etat = 4;
+    break;
+
+case SDLK_l:
+    p2.attack1.index = 0;
+    p2.attack1.pos.x = 0;
+    p2.attack1.pos.y = p2.attack1.spriteH * 3; // Ligne 3
+    p2.etat = 4;
+    break;
 
         case SDLK_x:
             p2.v.dx = 20;
@@ -167,7 +194,7 @@ while(quitter){
             p2.run1.pos.x = p2.run1.index * p2.run1.spriteW;
             p2.score += 10;
             break;
-        case SDLK_z:
+	case SDLK_SPACE:
             if (p2.up ==0)
 			{
 				p2.up=1;
@@ -175,6 +202,8 @@ while(quitter){
 				p2.score += 10;
 			}
             break;
+
+
         }
     }
 		else if (event.type == SDL_KEYUP)
@@ -212,6 +241,15 @@ while(quitter){
             p2.etat = 0;
             p.score += 10;
             break;
+	/*case SDLK_h:
+
+case SDLK_j:
+    p.etat = 0;
+    p.attack.index = 0;
+    p.attack.pos.x = 0;
+    break;*/
+
+
         case SDLK_UP:
         case SDLK_z:
             // Ne rien faire ici en général pour le saut,
@@ -235,8 +273,9 @@ if (p2.etat == 0 || p2.etat == 3) {
 
 
 	saut_Personnage(&p, dt, p.posEcran.x, posinit);
-	saut_Perso(&p2, dt, p2.posEcran2.x, posinit2);
 	
+    saut_Perso(&p2, dt, p2.posEcran2.x, posinit2);
+
         // Empêcher de sortir de l'écran
         if (p.posEcran.x < 0) p.posEcran.x = 0;
         if (p.posEcran.y < 0) p.posEcran.y = 0;

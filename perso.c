@@ -5,15 +5,15 @@
 
 void init_perso(perso *p, SDL_Rect posEcran,perso *p2,SDL_Rect posEcran2)
 {
-    p->walk.a = IMG_Load("walk.png");
-    p->dead.a = IMG_Load("dead.png");
-    p->jump.a = IMG_Load("jump.png");
-	p->run.a = IMG_Load("run.png");
+    p->walk.a = IMG_Load("asset-joueur/walk.png");
+    p->dead.a = IMG_Load("asset-joueur/dead.png");
+    p->jump.a = IMG_Load("asset-joueur/jump.png");
+	p->run.a = IMG_Load("asset-joueur/run.png");
 	//p->attack.a = IMG_Load("attack.png");	
-	p2->walk1.a = IMG_Load("walk1.png");
-    p2->dead1.a = IMG_Load("dead1.png");
-    p2->jump1.a = IMG_Load("jump1.png");
-	p2->run1.a = IMG_Load("run1.png");
+	p2->walk1.a = IMG_Load("asset-joueur/walk1.png");
+    p2->dead1.a = IMG_Load("asset-joueur/dead1.png");
+    p2->jump1.a = IMG_Load("asset-joueur/jump1.png");
+	p2->run1.a = IMG_Load("asset-joueur/run1.png");
     
     if (!p->walk.a || !p->dead.a || !p->jump.a || !p->run.a )
     {
@@ -70,13 +70,19 @@ if (p2->walk1.a == NULL) {
 	p->run.speed=8;
 	p->run.pos = (SDL_Rect){0, 0, p->run.spriteW, p->run.spriteH};
 	
-	/*//attack
-	
-    p->attaxk.spriteW = p->attack.a->w / 6;// 9 image par ligne
-    p->attack.spriteH = p->attack.a->h / 4; // 4 ligne directiion
-    p->attack.max = 6; //max 9 image
-    p->attack.index = 0; //premiere pic dans la ligne
-    p->attack.pos = (SDL_Rect){0, 0, p->attack.spriteW, p->attack.spriteH};//position de l'image dans l'ecran*/
+	//attack
+
+p->attack.a = IMG_Load("asset-joueur/attack.png");
+
+p->attack.spriteW = p->attack.a->w / 6; // 6 colonnes
+p->attack.spriteH = p->attack.a->h / 4; // 4 lignes
+p->attack.max = 6; // 6 frames par ligne
+p->attack.index = 0;
+p->attack.pos.x = 0;
+p->attack.pos.y = 0;
+p->attack.pos.w = p->attack.spriteW;
+p->attack.pos.h = p->attack.spriteH;
+
 
 
     p->posEcran = posEcran;
@@ -90,10 +96,10 @@ p->direction1 = 0;
 
 
     p->health = 100;
-	p->etat_vie[0]=IMG_Load("4.png");
-	p->etat_vie[1]=IMG_Load("3.png");
-	p->etat_vie[2]=IMG_Load("2.png");
-	p->etat_vie[3]=IMG_Load("1.png");
+	p->etat_vie[0]=IMG_Load("asset-joueur/4.png");
+	p->etat_vie[1]=IMG_Load("asset-joueur/3.png");
+	p->etat_vie[2]=IMG_Load("asset-joueur/2.png");
+	p->etat_vie[3]=IMG_Load("asset-joueur/1.png");
 
 	for (int i = 0; i < 4; i++) {
         if (p->etat_vie[i] == NULL) {
@@ -136,6 +142,19 @@ p->direction1 = 0;
 	p2->run1.speed=8;
 	p2->run1.pos = (SDL_Rect){0, 0, p2->run1.spriteW, p2->run1.spriteH};
 
+	//attack
+
+p2->attack1.a = IMG_Load("asset-joueur/attack1.png");
+
+p2->attack1.spriteW = p2->attack1.a->w / 13; // 6 colonnes
+p2->attack1.spriteH = p2->attack1.a->h / 4; // 4 lignes
+p2->attack1.max = 13; // 6 frames par ligne
+p2->attack1.index = 0;
+p2->attack1.pos.x = 0;
+p2->attack1.pos.y = 0;
+p2->attack1.pos.w = p2->attack1.spriteW;
+p2->attack1.pos.h = p2->attack1.spriteH;
+
 p2->posEcran2 = posEcran2;
     p2->v.dx = 0;
     p2->v.dy = 0;
@@ -147,10 +166,10 @@ p2->posEcran2 = posEcran2;
 p2->direction2 = 0;
 
 p2->health = 100;
-	p2->etat_vie[0]=IMG_Load("4.png");
-	p2->etat_vie[1]=IMG_Load("3.png");
-	p2->etat_vie[2]=IMG_Load("2.png");
-	p2->etat_vie[3]=IMG_Load("1.png");
+	p2->etat_vie[0]=IMG_Load("asset-joueur/4.png");
+	p2->etat_vie[1]=IMG_Load("asset-joueur/3.png");
+	p2->etat_vie[2]=IMG_Load("asset-joueur/2.png");
+	p2->etat_vie[3]=IMG_Load("asset-joueur/1.png");
 
 	for (int i = 0; i < 4; i++) {
         if (p2->etat_vie[i] == NULL) {
@@ -196,10 +215,10 @@ void afficher_perso(SDL_Surface *ecran, perso *p)
     posSprite = &p->run.pos;
 	break;
 	
-	/*case 4:
+	case 4:
 	sprite = p->attack.a;
     posSprite = &p->attack.pos;
-	break;*/
+	break;
 
     }
     
@@ -247,13 +266,20 @@ void animer_perso(perso *p)
         p->run.pos.x = p->run.index * p->run.spriteW;
     }
 	}
-	/*else if (p->etat == 4 && p->v.dx != 0)
+	else if (p->etat == 4)
     {
-        p->attack.index = (p->attack.index + 1) % p->attack.max;//quand on obtient 0 on a atteint la derniere frame et elle retourne a la premiere frame
+	p->attack.index = (p->attack.index + 1);
+	if(p->attack.index >= p->attack.max)       
+	{
+		p->etat = 0;
+		p->attack.index = 0;  //quand on obtient 0 on a atteint la derniere frame et elle retourne a la premiere frame
+	}
+
         p->attack.pos.x = p->attack.index * p->attack.spriteW;//indiquer la frame afficher et la largeur de la frame et elle se decale a droite et on trouve la bonne spritesheet
 	
+	
 
-    }*/
+    }
 
 
 }
@@ -285,6 +311,12 @@ void afficher_perso2(SDL_Surface *ecran, perso *p2)
     sprite2 = p2->run1.a;
     posSprite2 = &p2->run1.pos;
     break;
+
+case 4:
+	sprite2 = p2->attack1.a;
+    posSprite2 = &p2->attack1.pos;
+	break;
+
     }	
     
 	if (sprite2 != NULL && posSprite2 != NULL) 
@@ -330,6 +362,20 @@ if (p2->etat == 0 && p2->v.dx != 0)
         p2->run1.pos.x = p2->run1.index * p2->run1.spriteW;
     }
 }
+else if (p2->etat == 4)
+    {
+	p2->attack1.index = (p2->attack1.index + 1);
+	if(p2->attack1.index >= p2->attack1.max)       
+	{
+		p2->etat = 0;
+		p2->attack1.index = 0;  //quand on obtient 0 on a atteint la derniere frame et elle retourne a la premiere frame
+	}
+
+        p2->attack1.pos.x = p2->attack1.index * p2->attack1.spriteW;//indiquer la frame afficher et la largeur de la frame et elle se decale a droite et on trouve la bonne spritesheet
+	
+	
+
+    }
 
 }
 
