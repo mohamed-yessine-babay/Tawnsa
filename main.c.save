@@ -1,0 +1,156 @@
+#include "main.h"
+
+typedef struct {
+    Uint32 start_time;
+    Uint32 elapsed_time;
+} GameTime;
+
+// ✅ Fonction d’affichage du temps
+void afficher_temps(SDL_Surface *ecran, TTF_Font *font, GameTime *game_time, SDL_Color color) {
+    game_time->elapsed_time = (SDL_GetTicks() - game_time->start_time) / 1000;
+
+    char time_str[20];
+    sprintf(time_str, "Time: %d s", game_time->elapsed_time);
+
+    SDL_Surface* timeSurface = TTF_RenderText_Solid(font, time_str, color);
+    SDL_Rect timePos = {10, 10};
+    SDL_BlitSurface(timeSurface, NULL, ecran, &timePos);
+    SDL_FreeSurface(timeSurface);
+}
+
+int main() {
+    SDL_Rect pos, pos1;
+    SDL_Surface *ecran, *perso, *perso1;
+    background bg, bg1;
+    SDL_Event event;
+    int bfin = 0;
+    Uint32 dt, t_prev;
+    int partage_active = 0; // ✅ Drapeau pour activer ou non le partage
+
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+        fprintf(stderr, "Échec d'initialisation de SDL.\n");
+        return 1;
+    }
+
+    if (TTF_Init() == -1) {
+        fprintf(stderr, "Échec d'initialisation de TTF.\n");
+        return 1;
+    }
+
+    TTF_Font* font = TTF_OpenFont("arial.ttf", 24);
+    SDL_Color textColor = {255, 255, 255};
+
+    printf("Bonjour le monde, SDL est initialisée avec succès.\n");
+
+    ecran = SDL_SetVideoMode(620, 250, 32, SDL_HWSURFACE);
+    if (ecran == NULL) {
+        fprintf(stderr, "Échec de changement du mode vidéo : %s.\n", SDL_GetError());
+        return 1;
+    }
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)         printf("Erreur audio: %s", Mix_GetError());
+    }
+
+    Mix_Music *musique = NULL;
+    perso = IMG_Load("background/0.png");
+    perso1 = IMG_Load("background/0.png");
+
+    pos.x = 0; pos.y = 75;
+    pos1.x = 0; pos1.y = 200;
+
+    GameTime game_time;
+    game_time.start_time = SDL_GetTicks();
+
+    initpartage(&bg, &bg1, musique);
+
+    int d = 3;
+    int direction = 3;
+
+    SDL_EnableKeyRepeat(1, 1);
+
+    while (!bfin) {
+        t_prev = SDL_GetTicks();
+
+        // ✅ Lecture des événements
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    bfin = 1;
+                    break;
+                case SDL_KEYDOWN:
+                    switch (event.key.keysym.sym) {
+                        case SDLK_p:
+                            partage_active = 1; // ✅ Active le mode partage
+                            break;
+                        case SDLK_a:
+                            if (partage_active)
+                                scrolling(&bg1, &pos1, 1, 1); // Gauche pour bg1 si partage activé
+                            pos1.x -= 1;
+                            break;
+                        case SDLK_d:
+                            if (partage_active)
+                                scrolling(&bg1, &pos1, 1, 0); // Droite pour bg1 si partage activé
+                            pos1.x += 1;
+                            break;
+                        case SDLK_RIGHT:
+                            d = 0; // Droite pour bg
+                            scrolling(&bg, &pos, 1, d);
+                            pos.x += 1;
+                            break;
+                        case SDLK_LEFT:
+                            d = 1; // Gauche pour bg
+                            scrolling(&bg, &pos, 1, d);
+                            pos.x -= 1;
+                            break;
+                        case SDLK_DOWN:
+                            d = 2; // Bas pour bg
+                            scrolling(&bg, &pos, 1, d);
+                            pos.y += 1;
+                            break;
+                        case SDLK_UP:
+                            d = 3; // Haut pour bg
+                            scrolling(&bg, &pos, 1, d);
+                            pos.y -= 1;
+                            break;
+                        // Gestion des flèches pour le partage (bg1)
+                        case SDLK_w: // Haut pour bg1
+                            if (partage_active)
+                                scrolling(&bg1, &pos1, 1, 2);
+                            pos1.y -= 1;
+                            break;
+                        case SDLK_s: // Bas pour bg1
+                            if (partage_active)
+                                scrolling(&bg1, &pos1, 1, 3);
+                            pos1.y += 1;
+                            break;
+                    }
+                    break;
+            }
+        }
+
+        // ✅ Affichage des backgrounds
+        afficher_back(bg, ecran);
+
+        if (partage_active) {
+            afficher_back(bg1, ecran);
+            SDL_BlitSurface(perso1, NULL, ecran, &pos1);
+        }
+
+        SDL_BlitSurface(perso, NULL, ecran, &pos);
+        afficher_temps(ecran, font, &game_time, textColor);
+
+        SDL_Flip(ecran);
+        SDL_Delay(16); // Limiter à ~60 FPS
+    }
+
+    // ✅ Libérations
+    SDL_FreeSurface(perso);
+    SDL_FreeSurface(perso1);
+    Mix_CloseAudio();
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
+
+    return 0;
+}
+
