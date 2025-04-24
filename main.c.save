@@ -1,4 +1,5 @@
-#include "main.h"
+
+#include "background.h"
 
 typedef struct {
     Uint32 start_time;
@@ -42,21 +43,22 @@ int main() {
 
     printf("Bonjour le monde, SDL est initialisée avec succès.\n");
 
-    ecran = SDL_SetVideoMode(620, 250, 32, SDL_HWSURFACE);
+    ecran = SDL_SetVideoMode(1920, 1080, 32, SDL_HWSURFACE);
     if (ecran == NULL) {
         fprintf(stderr, "Échec de changement du mode vidéo : %s.\n", SDL_GetError());
         return 1;
     }
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)         printf("Erreur audio: %s", Mix_GetError());
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1) {
+        printf("Erreur audio: %s", Mix_GetError());
     }
 
     Mix_Music *musique = NULL;
-    perso = IMG_Load("background/0.png");
-    perso1 = IMG_Load("background/0.png");
+    perso = IMG_Load("0.png");
+    perso1 = IMG_Load("0.png");
 
-    pos.x = 0; pos.y = 75;
-    pos1.x = 0; pos1.y = 200;
+    pos.x = 0; pos.y = 800;
+    pos1.x = 960; pos1.y = 800;
 
     GameTime game_time;
     game_time.start_time = SDL_GetTicks();
@@ -84,44 +86,44 @@ int main() {
                             break;
                         case SDLK_a:
                             if (partage_active)
-                                scrolling(&bg1, &pos1, 1, 1); // Gauche pour bg1 si partage activé
-                            pos1.x -= 1;
+                                scrolling(&bg1, &pos1, 5, 1); // Gauche pour bg1 si partage activé
+                            pos1.x -= 5;
                             break;
                         case SDLK_d:
                             if (partage_active)
-                                scrolling(&bg1, &pos1, 1, 0); // Droite pour bg1 si partage activé
-                            pos1.x += 1;
+                                scrolling(&bg1, &pos1, 5, 0); // Droite pour bg1 si partage activé
+                            pos1.x += 5;
                             break;
                         case SDLK_RIGHT:
                             d = 0; // Droite pour bg
-                            scrolling(&bg, &pos, 1, d);
-                            pos.x += 1;
+                            scrolling(&bg, &pos, 5, d);
+                            pos.x += 5;
                             break;
                         case SDLK_LEFT:
                             d = 1; // Gauche pour bg
-                            scrolling(&bg, &pos, 1, d);
-                            pos.x -= 1;
+                            scrolling(&bg, &pos, 5, d);
+                            pos.x -= 5;
                             break;
                         case SDLK_DOWN:
                             d = 2; // Bas pour bg
-                            scrolling(&bg, &pos, 1, d);
-                            pos.y += 1;
+                            scrolling(&bg, &pos, 5, d);
+                            pos.y += 5;
                             break;
                         case SDLK_UP:
                             d = 3; // Haut pour bg
-                            scrolling(&bg, &pos, 1, d);
-                            pos.y -= 1;
+                            scrolling(&bg, &pos, 5, d);
+                            pos.y -= 5;
                             break;
                         // Gestion des flèches pour le partage (bg1)
                         case SDLK_w: // Haut pour bg1
                             if (partage_active)
-                                scrolling(&bg1, &pos1, 1, 2);
-                            pos1.y -= 1;
+                                scrolling(&bg1, &pos1, 5, 2);
+                            pos1.y -= 5;
                             break;
                         case SDLK_s: // Bas pour bg1
                             if (partage_active)
-                                scrolling(&bg1, &pos1, 1, 3);
-                            pos1.y += 1;
+                                scrolling(&bg1, &pos1, 5, 3);
+                            pos1.y += 5;
                             break;
                     }
                     break;
